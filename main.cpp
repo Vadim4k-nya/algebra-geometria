@@ -1,13 +1,6 @@
 #include <iostream>
 #include <Windows.h>
 
-
-
-/*int NOK(int num1, int num2) {
-	return num1 * num2 / NOD(num1, num2);
-}*/
-
-
 class Integer {
 public:
 
@@ -45,10 +38,6 @@ public:
 		return units_;
 	}
 
-	void Print()const {
-		std::cout << (sign_ ? '-' : ' ') << units_ << '\n';
-	}
-
 	//способы проверки состояния
 
 	bool isOdd()const {
@@ -68,43 +57,52 @@ public:
 		return 1;
 	}
 
-	/*bool isСoprime()const {
-		if (NOD(units_) == 1)
+	bool isСoprime(Integer B)const {
+		Integer A = units_;
+		if (A.NOD(B) == 1)
 		{
 			return 1;
 		}
 		return 0;
-	}*/
+	}
 
-	/*int NOD(Integer a, Integer b) {
-		if (a < b) {
-			std::swap(a, b);
+	int NOD(Integer B) {
+		Integer A = units_;
+		if (A.units_ < B.units_) {
+			std::swap(A.units_, B.units_);
 		}
-		while (a % b != 0) {
-			a = a % b;
-			std::swap(a, b);
+		while (A.units_ % B.units_ != 0) {
+			A.units_ = A.units_ % B.units_;
+			std::swap(A.units_, B.units_);
 		}
-		return b;
-	}*/
+		return B.units_;
+	}
+
+	int NOK(Integer B) {
+		Integer A = units_;
+		Integer result;
+		result = A * B / A.NOD(B);
+		return result.units_;
+	}
 
 	//перегрузки операторов
 
-	Integer operator+(const Integer& other)const {
+	friend Integer operator+(const Integer& A, const Integer& B) {
 		Integer result;
-		if (sign_ == other.sign_) {
-			result.sign_ = sign_;
-			result.units_ = units_ + other.units_;
+		if (A.sign_ == B.sign_) {
+			result.sign_ = A.sign_;
+			result.units_ = A.units_ + B.units_;
 		}
 		else
 		{
-			if (units_ > other.units_)
+			if (A.units_ > B.units_)
 			{
-				result.sign_ = sign_;
-				result.units_ = units_ - other.units_;
+				result.sign_ = A.sign_;
+				result.units_ = A.units_ - B.units_;
 			}
-			else if (units_ < other.units_) {
-				result.sign_ = other.sign_;
-				result.units_ = other.units_ - units_;
+			else if (A.units_ < B.units_) {
+				result.sign_ = B.sign_;
+				result.units_ = B.units_ - A.units_;
 			}
 			else {
 				result.sign_ = false;
@@ -114,44 +112,209 @@ public:
 		return result;
 	}
 
-	friend Integer operator-(const Integer& a, const Integer& b) {
-		Integer tmp = b;
+	friend Integer operator-(const Integer& A, const Integer& B) {
+		Integer tmp = B;
 		tmp.sign_ = !tmp.sign_;
-		return a + tmp;
+		return A + tmp;
 	}
 
-	friend Integer operator*(Integer a, Integer b) {
-		return Integer();
+	friend Integer operator*(const Integer& A, const Integer& B) {
+		Integer result;
+		for (int i = 0; i < B.GetUnits(); i++)
+		{
+			result.units_ += A.units_;
+		}
+		if (A.sign_ || B.sign_)
+		{
+			result.sign_ = true;
+		}
+		return result;
 	}
 
+	friend Integer operator/(const Integer& A, const Integer& B) {
+		Integer result;
+		result = A.units_ / B.units_;
+		if (A.sign_ || B.sign_)
+		{
+			result.sign_ = true;
+		}
+		return result;
+	}
+
+	friend Integer operator%(const Integer& A, const Integer& B) {
+		Integer result;
+		result = A.units_ % B.units_;
+		if (A.sign_ || B.sign_ && result.units_ != 0)
+		{
+			result.sign_ = true;
+		}
+		return result;
+	}
+
+
+	Integer operator+=(int A) {
+		Integer result(*this);
+		if (sign_)
+		{
+			units_ = units_ - A;
+		}
+		else
+		{
+			units_ = units_ + A;
+		}
+		return result;
+	}
+
+	Integer operator-=(int A) {
+		Integer result(*this);
+		if (sign_)
+		{
+			units_ = units_ + A;
+		}
+		else
+		{
+			units_ = units_ - A;
+		}
+		return result;
+	}
+
+	Integer operator*=(int A) {
+		Integer result(*this);
+		if (sign_)
+		{
+			units_ = units_ * A;
+		}
+		else
+		{
+			units_ = units_ * A;
+		}
+		return result;
+	}
+
+	Integer operator/=(int A) {
+		Integer result(*this);
+		if (sign_)
+		{
+			units_ = units_ / A;
+		}
+		else
+		{
+			units_ = units_ / A;
+		}
+		return result;
+	}
+
+
+	Integer operator++() {
+		if (sign_)
+		{
+			units_ -= 1;
+		}
+		else
+		{
+			units_ += 1;
+		}
+		return *this;
+	}
+
+	Integer operator++(int) {
+		Integer result(*this);
+		if (sign_)
+		{
+			units_ -= 1;
+		}
+		else
+		{
+			units_ += 1;
+		}
+		return result;
+	}
+
+	Integer operator--() {
+		if (sign_)
+		{
+			units_ += 1;
+		}
+		else
+		{
+			units_ -= 1;
+		}
+		return *this;
+	}
+
+	Integer operator--(int) {
+		Integer result(*this);
+		if (sign_)
+		{
+			units_ += 1;
+		}
+		else
+		{
+			units_ -= 1;
+		}
+		return result;
+	}
+
+
+	friend std::ostream& operator<<(std::ostream& out, const Integer obj) {
+		out << (obj.sign_ ? '-' : ' ') << obj.units_;
+		return out;
+	}
 	
-
-
 private:
 	bool sign_;
 	unsigned units_;
 };
 
+class Rational {
+public:
+
+	Rational() :Rational(0u, 0u) {};
+	Rational(Integer numerator, Integer denominator) :numerator_(numerator), denominator_(denominator) {};
+	Rational(int numerator_, int denominator_) {};
+
+	void SetSign(bool newSign) {
+		this->sign_ = newSign;
+	}
+
+	void SetNumerator(Integer newNumerator) {
+		this->numerator_ = newNumerator;
+	}
+
+	bool GetSign()const {
+		return sign_;
+	}
 
 
+	friend std::ostream& operator<<(std::ostream& out, const Rational obj) {
+		out << obj.numerator_ << "/" << obj.denominator_;
+		return out;
+	}
+
+private:
+	bool sign_;
+	Integer numerator_;
+	Integer denominator_;
+};
 
 int main() {
 
 	SetConsoleCP(1251);
 	SetConsoleOutputCP(1251);
 
-	Integer num1{ !37 };
+	Integer num1{ 37 };
 	Integer num2{ -42 };
-	
-	num1.Print();
+
+	std::cout << num1 << '\n';
 	std::cout << (num1.isOdd() ? "Четное" : "Не четное") << '\n';
 	std::cout << (num1.isPositive() ? "Положительное" : "Отрицательное") << '\n';
-	std::cout << (num1.isPrime() ? "Простое" : "Сложное") << '\n';
-	//std::cout << num1 << " и " << num2 << " взаимнопростые(1) или взаимносложные(0): " << num1, num2.isСoprime() << '\n';
+	std::cout << (num1.isPrime() ? "Простое" : "Сложное") << "\n\n";
+
+	std::cout << num1 << " и " << num2 << (num1.isСoprime(num2) ? " Взаимно простые" : "Взаимно сложные") << '\n';
 	
-	//std::cout << "Наибольший общий делитель " << num1 << " и " << num2 << " : " << NOD(num1, num2) << '\n';
-	//std::cout << "Наименьшее общее кратное " << num1 << " и " << num2 << " : " << NOK(Integer(num1).Getunits(), Integer(num2).Getunits()) << '\n';
+	std::cout << "\n\nНаибольший общий делитель " << num1 << " и " << num2 << ": " << num1.NOD(num2) << '\n';
+	std::cout << "Наименьшее общее кратное " << num1 << " и " << num2 << ": " << num1.NOK(num2) << '\n';
 	
+
 	return 0;
 }
-
