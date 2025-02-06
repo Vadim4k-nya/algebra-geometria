@@ -1,5 +1,6 @@
 #include <iostream>
 #include <Windows.h>
+#include <string>
 
 class Integer {
 public:
@@ -17,6 +18,27 @@ public:
 		else {
 			sign_ = false;
 			units_ = static_cast<unsigned>(number);
+		}
+	}
+	/*Integer(double number) {
+		if (number < 0)
+		{
+			sign_ = true;
+			units_ = ::abs(number);
+		}
+		else {
+			sign_ = false;
+			units_ = static_cast<unsigned>(number);
+		}
+	}*/
+	Integer(std::string number) {
+		units_ = ::abs(std::stoi(number));
+		if (number[0] == '-')
+		{
+			sign_ = true;
+		}
+		else {
+			sign_ = false;
 		}
 	}
 
@@ -57,7 +79,7 @@ public:
 		return 1;
 	}
 
-	bool isСoprime(Integer B)const {
+	bool isСoprime(Integer& B)const {
 		Integer A = units_;
 		if (A.NOD(B) == 1)
 		{
@@ -66,7 +88,7 @@ public:
 		return 0;
 	}
 
-	int NOD(Integer B) {
+	int NOD(Integer& B)const {
 		Integer A = units_;
 		if (A.units_ < B.units_) {
 			std::swap(A.units_, B.units_);
@@ -78,7 +100,7 @@ public:
 		return B.units_;
 	}
 
-	int NOK(Integer B) {
+	int NOK(Integer& B)const {
 		Integer A = units_;
 		Integer result;
 		result = A * B / A.NOD(B);
@@ -132,6 +154,10 @@ public:
 	}
 
 	friend Integer operator/(const Integer& A, const Integer& B) {
+		if (B.units_ == 0)
+		{
+			return 0;
+		}
 		Integer result;
 		result = A.units_ / B.units_;
 		if (A.sign_ || B.sign_)
@@ -255,6 +281,95 @@ public:
 		return result;
 	}
 
+	Integer operator+() {
+		return { sign_, units_ };
+	}
+
+	Integer operator-() {
+		return { !sign_, units_ };
+	}
+
+
+	bool operator!() {
+		return !sign_;
+	}
+
+	friend bool operator==(const Integer& A, const Integer& B) {
+		if (A.sign_ == B.sign_ && A.units_ == B.units_)
+		{
+			return true;
+		}
+		else
+		{
+			return false;
+		}
+	}
+
+	friend bool operator!=(const Integer& A, const Integer& B) {
+		return !(A == B);
+	}
+
+	friend bool operator<(const Integer& A, const Integer& B) {
+		if (B.sign_ < A.sign_)
+		{
+			return false;
+		}
+		else if (B.sign_ && A.sign_) {
+			if (B.units_ < A.units_) {
+				return true;
+			}
+			else {
+				return false;
+			}
+		}
+		else if (!B.sign_ && !A.sign_) {
+			if (B.units_ > A.units_) {
+				return true;
+			}
+			else {
+				return false;
+			}
+		}
+		else
+		{
+			return true;
+		}
+	}
+
+	friend bool operator<=(const Integer& A, const Integer& B) {
+		if (A == B)
+		{
+			return true;
+		}
+		if (A < B) 
+		{
+			return true;
+		}
+		else 
+		{
+			return false;
+		}
+	}
+
+	friend bool operator>(const Integer& A, const Integer& B) {
+		return !(A < B);
+	}
+
+	friend bool operator>=(const Integer& A, const Integer& B) {
+		if (A == B)
+		{
+			return true;
+		}
+		if (A > B)
+		{
+			return true;
+		}
+		else
+		{
+			return false;
+		}
+	}
+
 
 	friend std::ostream& operator<<(std::ostream& out, const Integer obj) {
 		out << (obj.sign_ ? '-' : ' ') << obj.units_;
@@ -269,30 +384,220 @@ private:
 class Rational {
 public:
 
+	//способы создания объектов
+
 	Rational() :Rational(0u, 0u) {};
 	Rational(Integer numerator, Integer denominator) :numerator_(numerator), denominator_(denominator) {};
-	Rational(int numerator_, int denominator_) {};
-
-	void SetSign(bool newSign) {
-		this->sign_ = newSign;
+	Rational(int numerator, int denominator) {
+		Integer num = numerator, den = denominator;
+		this->numerator_ = num;
+		this->denominator_ = den;
+	};
+	Rational(double number) {
+		int intPart;
+		this->denominator_ = 100;
+		intPart = number;
+		number -= intPart;
+		this->numerator_ = (number * 100) + (intPart * denominator_);
+	}
+	Rational(std::string number) {
+		double stod = std::stod(number);
+		int intPart;
+		this->denominator_ = 100;
+		intPart = stod;
+		stod -= intPart;
+		this->numerator_ = (stod * 100) + (intPart * denominator_);
 	}
 
-	void SetNumerator(Integer newNumerator) {
+	//способы обработки объектов
+		
+	void SetNumerator(Integer& newNumerator) {
 		this->numerator_ = newNumerator;
 	}
 
-	bool GetSign()const {
-		return sign_;
+	void SetDeniminator(Integer& newDeniminator) {
+		this->denominator_ = newDeniminator;
+	}
+
+	Integer GetNumerator()const
+	{
+		return numerator_;
+	}
+
+	Integer GetDenominator()const
+	{
+		return denominator_;
+	}
+
+	//способы проверки состояния
+
+	bool Proper()const {
+		if (numerator_.GetUnits() < denominator_.GetUnits())
+		{
+			return true;
+		}
+		else
+		{
+			return false;
+		}
+	}
+
+	bool Positive()const {
+		if (numerator_.GetSign() == denominator_.GetSign())
+		{
+			return true;
+		}
+		else 
+		{
+			return false;
+		}
+	}
+
+	bool SameThing()const
+	{
+		if (numerator_ == denominator_)
+		{
+			return true;
+		}
+		else 
+		{
+			return false;
+		}
+	}
+
+	// Методы для получения значений
+
+	Rational Reverse() 
+	{
+		Integer numer = denominator_,
+			denom = numerator_;
+		return { numer, denom };
+	}
+
+	Rational Simplifying()
+	{
+		Integer numer = numerator_,
+			denom = denominator_;
+		numer /= numer.NOD(denom);
+		denom /= numer.NOD(denom);
+		return { numer, denom };
+	}
+
+	Integer IntParts() 
+	{
+		return numerator_ / denominator_;
+	}
+
+	Rational FractPart()
+	{
+		return { numerator_ % denominator_, denominator_ };
+	}
+
+	// Методы для модификации дроби
+
+	void ModSimplifying() 
+	{
+		numerator_ /= numerator_.NOD(denominator_);
+		denominator_ /= numerator_.NOD(denominator_);
+	}
+
+	void ModReverse()
+	{
+		std::swap(numerator_, denominator_);
+	}
+
+	// Операторы
+
+	friend Rational operator+(const Rational& A, const Rational& B) 
+	{
+		Rational result;
+		result.numerator_ = A.numerator_ * B.denominator_ + B.numerator_ * A.denominator_;
+		result.denominator_ = A.denominator_ * B.numerator_;
+	}
+
+	friend Rational operator-(const Rational& A, const Rational& B) 
+	{
+		Rational result;
+		result.numerator_ = A.numerator_ * B.denominator_ - B.numerator_ * A.denominator_;
+		result.denominator_ = A.denominator_ * B.numerator_;
+	}
+
+	friend Rational operator*(const Rational& A, const Rational& B) 
+	{
+		Rational result;
+		result.numerator_ = A.numerator_ * B.numerator_;
+		result.denominator_ = A.denominator_ * B.denominator_;
+	}
+
+	friend Rational operator/(const Rational& A, const Rational& B) 
+	{
+		Rational result;
+		result.numerator_ = A.numerator_ * B.denominator_;
+		result.denominator_ = A.denominator_ * B.numerator_;
+	}
+
+	// Унарные +-
+
+	friend bool operator==(const Rational& A, const Rational& B) {
+		if (A.numerator_ == B.numerator_ && A.denominator_ == B.denominator_)
+		{
+			return true;
+		}
+		else
+		{
+			return false;
+		}
+	}
+
+	friend bool operator!=(const Rational& A, const Rational& B) {
+		return !(A == B);
+	}
+
+	friend bool operator<(const Rational& A, const Rational& B) {
+		
+	}
+
+	friend bool operator<=(const Rational& A, const Rational& B) {
+		if (A == B)
+		{
+			return true;
+		}
+		if (A < B)
+		{
+			return true;
+		}
+		else
+		{
+			return false;
+		}
+	}
+
+	friend bool operator>(const Rational& A, const Rational& B) {
+		return !(A < B);
+	}
+
+	friend bool operator>=(const Rational& A, const Rational& B) {
+		if (A == B)
+		{
+			return true;
+		}
+		if (A > B)
+		{
+			return true;
+		}
+		else
+		{
+			return false;
+		}
 	}
 
 
 	friend std::ostream& operator<<(std::ostream& out, const Rational obj) {
-		out << obj.numerator_ << "/" << obj.denominator_;
+		out << obj.numerator_ << " /" << obj.denominator_;
 		return out;
 	}
 
 private:
-	bool sign_;
 	Integer numerator_;
 	Integer denominator_;
 };
@@ -314,7 +619,11 @@ int main() {
 	
 	std::cout << "\n\nНаибольший общий делитель " << num1 << " и " << num2 << ": " << num1.NOD(num2) << '\n';
 	std::cout << "Наименьшее общее кратное " << num1 << " и " << num2 << ": " << num1.NOK(num2) << '\n';
-	
+
+	Rational num3 {20,300};
+
+	num3.ModSimplifying();
+	std::cout << num3;
 
 	return 0;
 }
