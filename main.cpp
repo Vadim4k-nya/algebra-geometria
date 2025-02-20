@@ -48,8 +48,8 @@ public:
 		this->sign_ = newSign;
 	}
 
-	void SetUnits(unsigned newunits) {
-		this->units_ = newunits;
+	void SetUnits(unsigned newUnits) {
+		this->units_ = newUnits;
 	}
 
 	bool GetSign()const {
@@ -62,14 +62,17 @@ public:
 
 	//способы проверки состояния
 
+	//Четность
 	bool isOdd()const {
-		return !bool(units_ % 2);
+		return !(units_ % 2);
 	}
 
+	//Положительность
 	bool isPositive()const {
 		return !sign_;
 	}
 
+	//Простота
 	bool isPrime()const {
 		for (int i = 2; i <= sqrt(units_); i++) {
 			if (units_ % i == 0) {
@@ -79,31 +82,35 @@ public:
 		return 1;
 	}
 
-	bool isСoprime(Integer& B)const {
-		Integer A = units_;
-		if (A.NOD(B) == 1)
+	//Взаимная простота
+	static bool isСoprime(const Integer& A, const Integer& B) {
+		if (NOD(A, B) == 1)
 		{
 			return 1;
 		}
 		return 0;
 	}
 
-	int NOD(Integer& B)const {
-		Integer A = units_;
-		if (A.units_ < B.units_) {
-			std::swap(A.units_, B.units_);
+	// Наибольший общий делитель
+	static Integer NOD(const Integer& A, const Integer& B) {
+		Integer result;
+		if (A % B == 0)
+			return B.units_;
+		if (B % A == 0)
+			return A.units_;
+		if (A > B)
+		{
+			result = NOD(A % B, B);
+			return result.units_;
 		}
-		while (A.units_ % B.units_ != 0) {
-			A.units_ = A.units_ % B.units_;
-			std::swap(A.units_, B.units_);
-		}
-		return B.units_;
+		result = NOD(A, B % A);
+		return result.units_;
 	}
 
-	int NOK(Integer& B)const {
-		Integer A = units_;
+	//Наименьшее общее кратное
+	static Integer NOK(const Integer& A, const Integer& B) {
 		Integer result;
-		result = A * B / A.NOD(B);
+		result = (A * B) / NOD(A, B);
 		return result.units_;
 	}
 
@@ -146,7 +153,11 @@ public:
 		{
 			result.units_ += A.units_;
 		}
-		if (A.sign_ || B.sign_)
+		if (A.sign_ == B.sign_)
+		{
+			result.sign_ = false;
+		}
+		else
 		{
 			result.sign_ = true;
 		}
@@ -160,7 +171,11 @@ public:
 		}
 		Integer result;
 		result = A.units_ / B.units_;
-		if (A.sign_ || B.sign_)
+		if (A.sign_ == B.sign_)
+		{
+			result.sign_ = false;
+		}
+		else
 		{
 			result.sign_ = true;
 		}
@@ -178,54 +193,58 @@ public:
 	}
 
 
-	Integer operator+=(int A) {
+	Integer operator+=(Integer A) {
 		Integer result(*this);
-		if (sign_)
+		if (sign_ == A.sign_)
 		{
-			units_ = units_ - A;
+			units_ = units_ + A.units_;
 		}
 		else
 		{
-			units_ = units_ + A;
+			units_ = units_ - A.units_;
 		}
 		return result;
 	}
 
-	Integer operator-=(int A) {
+	Integer operator-=(Integer A) {
 		Integer result(*this);
-		if (sign_)
+		if (sign_ == A.sign_)
 		{
-			units_ = units_ + A;
+			units_ = units_ - A.units_;
 		}
 		else
 		{
-			units_ = units_ - A;
+			units_ = units_ + A.units_;
 		}
 		return result;
 	}
 
-	Integer operator*=(int A) {
+	Integer operator*=(Integer A) {
 		Integer result(*this);
-		if (sign_)
+		if (sign_ == A.sign_)
 		{
-			units_ = units_ * A;
+			sign_ = false;
+			units_ = units_ * A.units_;
 		}
 		else
 		{
-			units_ = units_ * A;
+			sign_ = true;
+			units_ = units_ * A.units_;
 		}
 		return result;
 	}
 
-	Integer operator/=(int A) {
+	Integer operator/=(Integer A) {
 		Integer result(*this);
-		if (sign_)
+		if (sign_ == A.sign_)
 		{
-			units_ = units_ / A;
+			sign_ = false;
+			units_ = units_ / A.units_;
 		}
 		else
 		{
-			units_ = units_ / A;
+			sign_ = true;
+			units_ = units_ / A.units_;
 		}
 		return result;
 	}
@@ -337,11 +356,7 @@ public:
 	}
 
 	friend bool operator<=(const Integer& A, const Integer& B) {
-		if (A == B)
-		{
-			return true;
-		}
-		if (A < B) 
+		if (A == B || A < B)
 		{
 			return true;
 		}
@@ -352,15 +367,34 @@ public:
 	}
 
 	friend bool operator>(const Integer& A, const Integer& B) {
-		return !(A < B);
-	}
-
-	friend bool operator>=(const Integer& A, const Integer& B) {
-		if (A == B)
+		if (B.sign_ > A.sign_)
+		{
+			return false;
+		}
+		else if (B.sign_ && A.sign_) {
+			if (B.units_ > A.units_) {
+				return true;
+			}
+			else {
+				return false;
+			}
+		}
+		else if (!B.sign_ && !A.sign_) {
+			if (B.units_ < A.units_) {
+				return true;
+			}
+			else {
+				return false;
+			}
+		}
+		else
 		{
 			return true;
 		}
-		if (A > B)
+	}
+
+	friend bool operator>=(const Integer& A, const Integer& B) {
+		if (A == B || A > B)
 		{
 			return true;
 		}
@@ -431,7 +465,8 @@ public:
 
 	//способы проверки состояния
 
-	bool Proper()const {
+	//Правильность дроби
+	bool isProper()const {
 		if (numerator_.GetUnits() < denominator_.GetUnits())
 		{
 			return true;
@@ -442,7 +477,8 @@ public:
 		}
 	}
 
-	bool Positive()const {
+	//Положительность дроби
+	bool isPositive()const {
 		if (numerator_.GetSign() == denominator_.GetSign())
 		{
 			return true;
@@ -453,7 +489,8 @@ public:
 		}
 	}
 
-	bool SameThing()const
+	//являются ли 2 числа одним и тем же объектом в программе
+	bool isSameThing()const
 	{
 		if (numerator_ == denominator_)
 		{
@@ -467,6 +504,7 @@ public:
 
 	// Методы для получения значений
 
+	//Обратная дробь
 	Rational Reverse() 
 	{
 		Integer numer = denominator_,
@@ -474,20 +512,23 @@ public:
 		return { numer, denom };
 	}
 
+	//Упрощение дроби
 	Rational Simplifying()
 	{
 		Integer numer = numerator_,
 			denom = denominator_;
-		numer /= numer.NOD(denom);
-		denom /= numer.NOD(denom);
+		numer = numer / Integer::NOD(numer, denom);
+		denom = denom / Integer::NOD(numer, denom);
 		return { numer, denom };
 	}
 
+	//Найти целую часть
 	Integer IntParts() 
 	{
 		return numerator_ / denominator_;
 	}
 
+	//Найти дробную часть
 	Rational FractPart()
 	{
 		return { numerator_ % denominator_, denominator_ };
@@ -495,12 +536,14 @@ public:
 
 	// Методы для модификации дроби
 
+	//Модификатор упрощения дроби
 	void ModSimplifying() 
 	{
-		numerator_ /= numerator_.NOD(denominator_);
-		denominator_ /= numerator_.NOD(denominator_);
+		numerator_ = numerator_ / Integer::NOD(numerator_, denominator_);
+		denominator_ = denominator_ / Integer::NOD(numerator_, denominator_);
 	}
 
+	//Медификатор переворачивания дроби
 	void ModReverse()
 	{
 		std::swap(numerator_, denominator_);
@@ -536,7 +579,9 @@ public:
 		result.denominator_ = A.denominator_ * B.numerator_;
 	}
 
-	// Унарные +-
+	//Присваивающие версии операторов надо будет сделать
+
+	// Унарные +- надо будет сделать
 
 	friend bool operator==(const Rational& A, const Rational& B) {
 		if (A.numerator_ == B.numerator_ && A.denominator_ == B.denominator_)
@@ -554,41 +599,51 @@ public:
 	}
 
 	friend bool operator<(const Rational& A, const Rational& B) {
-		
+		if (A.denominator_ == B.denominator_)
+		{
+			return A.numerator_ < B.numerator_;
+		}
+		else if (A.numerator_ == B.numerator_)
+		{
+			return !(A.denominator_ < B.denominator_);
+		}
+		else 
+		{
+			Integer NOK = Integer::NOK(A.denominator_, B.denominator_);
+			return (A.numerator_ * NOK) < (B.numerator_ * NOK);
+		}
 	}
 
 	friend bool operator<=(const Rational& A, const Rational& B) {
-		if (A == B)
+		if (A < B && A == B)
 		{
 			return true;
 		}
-		if (A < B)
-		{
-			return true;
-		}
-		else
-		{
-			return false;
-		}
+		return false;
 	}
 
 	friend bool operator>(const Rational& A, const Rational& B) {
-		return !(A < B);
-	}
-
-	friend bool operator>=(const Rational& A, const Rational& B) {
-		if (A == B)
+		if (A.denominator_ == B.denominator_)
 		{
-			return true;
+			return A.numerator_ > B.numerator_;
 		}
-		if (A > B)
+		else if (A.numerator_ == B.numerator_)
 		{
-			return true;
+			return !(A.denominator_ > B.denominator_);
 		}
 		else
 		{
-			return false;
+			Integer NOK = Integer::NOK(A.denominator_, B.denominator_);
+			return (A.numerator_ * NOK) > (B.numerator_ * NOK);
 		}
+	}
+
+	friend bool operator>=(const Rational& A, const Rational& B) {
+		if (A > B && A == B)
+		{
+			return true;
+		}
+		return false;
 	}
 
 
@@ -607,23 +662,21 @@ int main() {
 	SetConsoleCP(1251);
 	SetConsoleOutputCP(1251);
 
-	Integer num1{ 37 };
-	Integer num2{ -42 };
+	/*Integer num1{6};
+	Integer num2{ -5 };
 
 	std::cout << num1 << '\n';
 	std::cout << (num1.isOdd() ? "Четное" : "Не четное") << '\n';
 	std::cout << (num1.isPositive() ? "Положительное" : "Отрицательное") << '\n';
 	std::cout << (num1.isPrime() ? "Простое" : "Сложное") << "\n\n";
 
-	std::cout << num1 << " и " << num2 << (num1.isСoprime(num2) ? " Взаимно простые" : "Взаимно сложные") << '\n';
+	std::cout << num1 << " и " << num2 << (Integer::isСoprime(num1, num2) ? " Взаимно простые" : " Взаимно сложные") << '\n';
 	
-	std::cout << "\n\nНаибольший общий делитель " << num1 << " и " << num2 << ": " << num1.NOD(num2) << '\n';
-	std::cout << "Наименьшее общее кратное " << num1 << " и " << num2 << ": " << num1.NOK(num2) << '\n';
+	std::cout << "\n\nНаибольший общий делитель " << num1 << " и " << num2 << ": " << Integer::NOD(num1, num2) << '\n';
+	std::cout << "Наименьшее общее кратное " << num1 << " и " << num2 << ": " << Integer::NOK(num1, num2) << '\n';
 
-	Rational num3 {20,300};
-
-	num3.ModSimplifying();
-	std::cout << num3;
+	Rational num3 {2,3};
+	Rational num4{ 3,3 };*/
 
 	return 0;
 }
